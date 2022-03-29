@@ -106,6 +106,11 @@ func CreateCatalogWithStorageProfile(client *Client, links types.LinkList, Name,
 	return CreateCatalogSubscriptionWithStorageProfile(client, links, Name, Description, "", "", false, storageProfiles)
 }
 
+// CreateCatalogSubscriptionWithStorageProfile creates a catalog from an external published one.
+// It takes a name and description for the catalog, as well as the location and password from the remote published catalog.
+// If location is not set, this function will create local catalogs.
+// If localCopy is true, it will sync all remote catalog items locally. If false, it needs to be done independently.
+// It also supports storageProfiles for the synced items
 func CreateCatalogSubscriptionWithStorageProfile(client *Client, links types.LinkList, name, description, location, password string, localCopy bool, storageProfiles *types.CatalogStorageProfiles) (*AdminCatalog, error) {
 	reqCatalog := &types.Catalog{
 		Name:        name,
@@ -144,6 +149,19 @@ func CreateCatalogSubscriptionWithStorageProfile(client *Client, links types.Lin
 		"application/vnd.vmware.admin.catalog+xml", "error creating catalog: %s", vcomp, catalog.AdminCatalog)
 
 	return catalog, err
+}
+
+// GetCatalogCreationTask takes a client and a types.TasksInProgress and returns the task that tracks catalog creation.
+// It returns nil and an error if the task wasn't found.
+func GetCatalogCreationTask(client *Client, taskInProgress *types.TasksInProgress) (*Task, error) {
+	for _, v := range taskInProgress.Task {
+		if v.OperationName == "catalogCreateCatalog" {
+			returnTask := NewTask(client)
+			returnTask.Task = v
+			return returnTask, nil
+		}
+	}
+	return nil, fmt.Errorf("no catalog creation task has been found")
 }
 
 // CreateCatalog creates a catalog with given name and description under
