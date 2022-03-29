@@ -1039,11 +1039,12 @@ type PublishExternalCatalogParams struct {
 // Description: Represents the configuration parameters for a catalog that has an external subscription.
 // Since: 5.5
 type ExternalCatalogSubscription struct {
-	ExpectedSslThumbprint    bool   `xml:"ExpectedSslThumbprint,omitempty"`
-	LocalCopy                bool   `xml:"LocalCopy,omitempty"`
-	Password                 string `xml:"Password,omitempty"`
 	SubscribeToExternalFeeds bool   `xml:"SubscribeToExternalFeeds,omitempty"`
 	Location                 string `xml:"Location,omitempty"`
+	Password                 string `xml:"Password,omitempty"`
+	ExpectedSslThumbprint    *bool  `xml:"ExpectedSslThumbprint,omitempty"`
+	LocalCopy                *bool  `xml:"LocalCopy,omitempty"`
+	LibraryID                string `xml:"LibraryId,omitempty"`
 }
 
 // CatalogStorageProfiles represents a container for storage profiles used by this catalog
