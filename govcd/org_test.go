@@ -517,6 +517,34 @@ func (vcd *TestVCD) Test_OrgCreateCatalog(check *C) {
 	check.Assert(err, IsNil)
 }
 
+func (vcd *TestVCD) Test_CreateCatalogSubscriptionWithStorageProfile(check *C) {
+	org, err := vcd.client.GetOrgByName(vcd.org.Org.Name)
+	check.Assert(err, IsNil)
+	check.Assert(org, NotNil)
+
+	catalog, err := org.CreateCatalog(TestCreateCatalog, TestCreateCatalogDesc)
+	check.Assert(err, IsNil)
+	AddToCleanupList(TestCreateCatalog, "catalog", vcd.org.Org.Name, "Test_CreateCatalog")
+
+	err = catalog.PublishToExternalOrganizations(types.PublishExternalCatalogParams{
+		Xmlns:                    types.XMLNamespaceVCloud,
+		IsPublishedExternally:    takeBoolPointer(true),
+		Password:                 "123456",
+		IsCachedEnabled:          takeBoolPointer(false),
+		PreserveIdentityInfoFlag: takeBoolPointer(false),
+	})
+	check.Assert(err, IsNil)
+
+	err = catalog.Refresh()
+	check.Assert(err, IsNil)
+
+	subscriptionURL := fmt.Sprintf("%s://%s%s", catalog.client.VCDHREF.Scheme, catalog.client.VCDHREF.Host, catalog.Catalog.PublishExternalCatalogParams.CatalogPublishedUrl)
+	subscribeCatalog, err := org.CreateCatalogSubscriptionWithStorageProfile("subs-catalog", "my subs catalog", subscriptionURL, "123456", false, nil)
+	check.Assert(err, IsNil)
+	AddToCleanupList("subs-catalog", "catalog", vcd.org.Org.Name, "Test_CreateCatalog")
+	check.Assert(subscribeCatalog, NotNil)
+}
+
 func (vcd *TestVCD) Test_OrgCreateCatalogWithStorageProfile(check *C) {
 	org, err := vcd.client.GetOrgByName(vcd.org.Org.Name)
 	check.Assert(err, IsNil)
