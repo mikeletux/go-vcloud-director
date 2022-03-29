@@ -59,6 +59,16 @@ func (adminOrg *AdminOrg) CreateCatalogWithStorageProfile(name, description stri
 	return adminCatalogWithParent, nil
 }
 
+func (adminOrg *AdminOrg) CreateCatalogSubscriptionWithStorageProfile(name, description, location, password string, localCopy bool, storageProfiles *types.CatalogStorageProfiles) (*AdminCatalog, error) {
+	adminCatalog, err := CreateCatalogSubscriptionWithStorageProfile(adminOrg.client, adminOrg.AdminOrg.Link, name, description, location, password, localCopy, storageProfiles)
+	if err != nil {
+		return nil, err
+	}
+	adminCatalogWithParent := NewAdminCatalogWithParent(adminOrg.client, adminOrg)
+	adminCatalogWithParent.AdminCatalog = adminCatalog.AdminCatalog
+	return adminCatalogWithParent, nil
+}
+
 // GetAllVDCs returns all depending VDCs for a particular Org
 func (adminOrg *AdminOrg) GetAllVDCs(refresh bool) ([]*Vdc, error) {
 	if refresh {
