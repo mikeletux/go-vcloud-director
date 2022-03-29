@@ -7,12 +7,11 @@ package govcd
 import (
 	"errors"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 type Org struct {
@@ -104,9 +103,13 @@ func CreateCatalog(client *Client, links types.LinkList, Name, Description strin
 
 // CreateCatalogWithStorageProfile is like CreateCatalog, but allows to specify storage profile
 func CreateCatalogWithStorageProfile(client *Client, links types.LinkList, Name, Description string, storageProfiles *types.CatalogStorageProfiles) (*AdminCatalog, error) {
+	return CreateCatalogSubscriptionWithStorageProfile(client, links, Name, Description, "", "", false, storageProfiles)
+}
+
+func CreateCatalogSubscriptionWithStorageProfile(client *Client, links types.LinkList, name, description, location, password string, localCopy bool, storageProfiles *types.CatalogStorageProfiles) (*AdminCatalog, error) {
 	reqCatalog := &types.Catalog{
-		Name:        Name,
-		Description: Description,
+		Name:        name,
+		Description: description,
 	}
 	vcomp := &types.AdminCatalog{
 		Xmlns:                  types.XMLNamespaceVCloud,
@@ -128,6 +131,15 @@ func CreateCatalogWithStorageProfile(client *Client, links types.LinkList, Name,
 	}
 
 	catalog := NewAdminCatalog(client)
+	if location != "" {
+		vcomp.ExternalCatalogSubscription = &types.ExternalCatalogSubscription{
+			SubscribeToExternalFeeds: true,
+			Location:                 location,
+			Password:                 password,
+			LocalCopy:                takeBoolPointer(localCopy),
+		}
+	}
+
 	_, err := client.ExecuteRequest(createOrgLink.HREF, http.MethodPost,
 		"application/vnd.vmware.admin.catalog+xml", "error creating catalog: %s", vcomp, catalog.AdminCatalog)
 
@@ -155,6 +167,16 @@ func (org *Org) CreateCatalogWithStorageProfile(name, description string, storag
 	}
 	catalog.Catalog = &adminCatalog.AdminCatalog.Catalog
 	return catalog, nil
+}
+
+func (org *Org) CreateCatalogSubscriptionWithStorageProfile(name, description, location, password string, localCopy bool, storageProfiles *types.CatalogStorageProfiles) (*AdminCatalog, error) {
+	adminCatalog, err := CreateCatalogSubscriptionWithStorageProfile(org.client, org.Org.Link, name, description, location, password, localCopy, storageProfiles)
+	if err != nil {
+		return nil, err
+	}
+	adminCatalogWithParent := NewAdminCatalogWithParent(org.client, org)
+	adminCatalogWithParent.AdminCatalog = adminCatalog.AdminCatalog
+	return adminCatalogWithParent, nil
 }
 
 func validateVdcConfiguration(vdcDefinition *types.VdcConfiguration) error {
