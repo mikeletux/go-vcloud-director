@@ -151,19 +151,6 @@ func CreateCatalogSubscriptionWithStorageProfile(client *Client, links types.Lin
 	return catalog, err
 }
 
-// GetCatalogCreationTask takes a client and a types.TasksInProgress and returns the task that tracks catalog creation.
-// It returns nil and an error if the task wasn't found.
-func GetCatalogCreationTask(client *Client, taskInProgress *types.TasksInProgress) (*Task, error) {
-	for _, v := range taskInProgress.Task {
-		if v.OperationName == "catalogCreateCatalog" {
-			returnTask := NewTask(client)
-			returnTask.Task = v
-			return returnTask, nil
-		}
-	}
-	return nil, fmt.Errorf("no catalog creation task has been found")
-}
-
 // CreateCatalog creates a catalog with given name and description under
 // the given organization. Returns an Catalog that contains a creation
 // task.
